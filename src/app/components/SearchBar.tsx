@@ -1,0 +1,35 @@
+import React from "react";
+
+interface SearchBarProps {
+  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onClick: () => void;
+  searchTerm: string;
+}
+
+const SearchBar: React.FC<SearchBarProps> = React.memo(
+  ({ onChange, onClick, searchTerm }) => {
+    return (
+      <div className="mb-6">
+        <p className="text-lg">Search</p>
+        <p className="text-sm text-gray-600">
+          Searching for: <span id="search-term">{searchTerm}</span>
+        </p>
+        <input
+          className="border border-gray-300 p-2 rounded w-full mb-4"
+          onChange={onChange}
+          value={searchTerm}
+          aria-label="Search advocates"
+        />
+        <button
+          className="bg-blue-500 text-white p-2 rounded"
+          onClick={onClick}
+          aria-label="Reset search"
+        >
+          Reset Search
+        </button>
+      </div>
+    );
+  }
+);
+
+export default SearchBar;
