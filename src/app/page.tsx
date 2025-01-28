@@ -5,11 +5,13 @@ import debounce from "lodash.debounce";
 
 import AdvocateTable from "./components/AdvocateTable";
 import SearchBar from "./components/SearchBar";
+import Loader from "./components/Loader";
 
 export default function Home() {
   const [advocates, setAdvocates] = useState<Advocate[]>([]);
   const [filteredAdvocates, setFilteredAdvocates] = useState<Advocate[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     console.log("fetching advocates...");
@@ -17,6 +19,7 @@ export default function Home() {
       response.json().then((jsonResponse) => {
         setAdvocates(jsonResponse.data);
         setFilteredAdvocates(jsonResponse.data);
+        setLoading(false);
       });
     });
   }, []);
@@ -25,11 +28,13 @@ export default function Home() {
     debounce((searchTerm: string) => {
       const filteredAdvocates = advocates.filter((advocate) => {
         return (
-          advocate.firstName.includes(searchTerm) ||
-          advocate.lastName.includes(searchTerm) ||
-          advocate.city.includes(searchTerm) ||
-          advocate.degree.includes(searchTerm) ||
-          advocate.specialties.includes(searchTerm) ||
+          advocate.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          advocate.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          advocate.city.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          advocate.degree.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          advocate.specialties.some((specialty) =>
+            specialty.toLowerCase().includes(searchTerm.toLowerCase())
+          ) ||
           String(advocate.yearsOfExperience).includes(searchTerm)
         );
       });
@@ -53,14 +58,20 @@ export default function Home() {
   }, [advocates]);
 
   return (
-    <main className="p-6">
-      <h1 className="text-3xl font-bold mb-6">Solace Advocates</h1>
+    <main className="p-6 bg-gray-100 min-h-screen">
+      <h1 className="text-4xl font-bold mb-6 text-center">Solace Advocates</h1>
       <SearchBar
         onChange={onChange}
         onClick={onClick}
         searchTerm={searchTerm}
       />
-      <AdvocateTable advocates={filteredAdvocates} />
+      {loading ? (
+        <Loader />
+      ) : filteredAdvocates.length === 0 ? (
+        <p className="text-center text-gray-600">No data available</p>
+      ) : (
+        <AdvocateTable advocates={filteredAdvocates} />
+      )}
     </main>
   );
 }
