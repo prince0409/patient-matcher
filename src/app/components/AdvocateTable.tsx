@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { Advocate } from "@/types/advocate";
 
 interface AdvocateTableProps {
@@ -32,9 +32,7 @@ const AdvocateTable: React.FC<AdvocateTableProps> = React.memo(
                 <td className="py-3 px-4 border-b">{advocate.city}</td>
                 <td className="py-3 px-4 border-b">{advocate.degree}</td>
                 <td className="py-3 px-4 border-b">
-                  {advocate.specialties.map((s, i) => (
-                    <div key={i}>{s}</div>
-                  ))}
+                  <Specialties specialties={advocate.specialties} />
                 </td>
                 <td className="py-3 px-4 border-b">
                   {advocate.yearsOfExperience}
@@ -48,5 +46,32 @@ const AdvocateTable: React.FC<AdvocateTableProps> = React.memo(
     );
   }
 );
+
+const Specialties: React.FC<{ specialties: string[] }> = ({ specialties }) => {
+  const [expanded, setExpanded] = useState(false);
+
+  const toggleExpanded = () => {
+    setExpanded(!expanded);
+  };
+
+  return (
+    <div>
+      {specialties
+        .slice(0, expanded ? specialties.length : 3)
+        .map((specialty, index) => (
+          <div key={index}>{specialty}</div>
+        ))}
+      {specialties.length > 3 && (
+        <button
+          onClick={toggleExpanded}
+          className="text-blue-500 underline mt-2"
+          aria-expanded={expanded}
+        >
+          {expanded ? "Show less" : "Show more"}
+        </button>
+      )}
+    </div>
+  );
+};
 
 export default AdvocateTable;
