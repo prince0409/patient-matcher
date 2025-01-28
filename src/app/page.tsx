@@ -1,91 +1,94 @@
 "use client";
+import { useState, useEffect, useCallback, Suspense, lazy } from "react";
+import { Advocate } from "@/types/advocate";
+import debounce from "lodash.debounce";
+import Loader from "./components/Loader";
 
-import { useEffect, useState } from "react";
-
+const AdvocateTable = lazy(() => import("./components/AdvocateTable"));
+const SearchBar = lazy(() => import("./components/SearchBar"));
 export default function Home() {
-  const [advocates, setAdvocates] = useState([]);
-  const [filteredAdvocates, setFilteredAdvocates] = useState([]);
+  const [advocates, setAdvocates] = useState<Advocate[]>([]);
+  const [filteredAdvocates, setFilteredAdvocates] = useState<Advocate[]>([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    console.log("fetching advocates...");
-    fetch("/api/advocates").then((response) => {
-      response.json().then((jsonResponse) => {
+  const fetchAdvocates = useCallback(() => {
+    setLoading(true);
+    setError(null);
+    fetch(`/api/advocates`)
+      .then((response) => response.json())
+      .then((jsonResponse) => {
         setAdvocates(jsonResponse.data);
         setFilteredAdvocates(jsonResponse.data);
+        setLoading(false);
+      })
+      .catch((err) => {
+        setError("Failed to fetch data. Please try again later.");
+        setLoading(false);
       });
-    });
   }, []);
 
-  const onChange = (e) => {
-    const searchTerm = e.target.value;
+  useEffect(() => {
+    fetchAdvocates();
+  }, [fetchAdvocates]);
 
-    document.getElementById("search-term").innerHTML = searchTerm;
+  const debouncedFilter = useCallback(
+    debounce((searchTerm: string) => {
+      const filteredAdvocates = advocates.filter((advocate) => {
+        return (
+          advocate.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          advocate.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          advocate.city.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          advocate.degree.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          advocate.specialties.some((specialty) =>
+            specialty.toLowerCase().includes(searchTerm.toLowerCase())
+          ) ||
+          String(advocate.yearsOfExperience).includes(searchTerm)
+        );
+      });
+      setFilteredAdvocates(filteredAdvocates);
+    }, 300),
+    [advocates]
+  );
 
-    console.log("filtering advocates...");
-    const filteredAdvocates = advocates.filter((advocate) => {
-      return (
-        advocate.firstName.includes(searchTerm) ||
-        advocate.lastName.includes(searchTerm) ||
-        advocate.city.includes(searchTerm) ||
-        advocate.degree.includes(searchTerm) ||
-        advocate.specialties.includes(searchTerm) ||
-        advocate.yearsOfExperience.includes(searchTerm)
-      );
-    });
+  const onChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const searchTerm = e.target.value;
+      setSearchTerm(searchTerm);
+      debouncedFilter(searchTerm);
+    },
+    [debouncedFilter]
+  );
 
-    setFilteredAdvocates(filteredAdvocates);
-  };
-
-  const onClick = () => {
-    console.log(advocates);
+  const onClick = useCallback(() => {
+    setSearchTerm("");
     setFilteredAdvocates(advocates);
-  };
+  }, [advocates]);
 
   return (
-    <main style={{ margin: "24px" }}>
-      <h1>Solace Advocates</h1>
-      <br />
-      <br />
-      <div>
-        <p>Search</p>
-        <p>
-          Searching for: <span id="search-term"></span>
+    <main className="p-6 bg-gray-100 min-h-screen">
+      <h1 className="text-4xl font-bold mb-6 text-center">Solace Advocates</h1>
+      <Suspense fallback={<Loader />}>
+        <SearchBar
+          onChange={onChange}
+          onClick={onClick}
+          searchTerm={searchTerm}
+        />
+      </Suspense>
+      {loading ? (
+        <Loader />
+      ) : error ? (
+        <p className="text-center text-red-600" role="alert">
+          {error}
         </p>
-        <input style={{ border: "1px solid black" }} onChange={onChange} />
-        <button onClick={onClick}>Reset Search</button>
-      </div>
-      <br />
-      <br />
-      <table>
-        <thead>
-          <th>First Name</th>
-          <th>Last Name</th>
-          <th>City</th>
-          <th>Degree</th>
-          <th>Specialties</th>
-          <th>Years of Experience</th>
-          <th>Phone Number</th>
-        </thead>
-        <tbody>
-          {filteredAdvocates.map((advocate) => {
-            return (
-              <tr>
-                <td>{advocate.firstName}</td>
-                <td>{advocate.lastName}</td>
-                <td>{advocate.city}</td>
-                <td>{advocate.degree}</td>
-                <td>
-                  {advocate.specialties.map((s) => (
-                    <div>{s}</div>
-                  ))}
-                </td>
-                <td>{advocate.yearsOfExperience}</td>
-                <td>{advocate.phoneNumber}</td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
+      ) : filteredAdvocates.length === 0 ? (
+        <p className="text-center text-gray-600">No data available</p>
+      ) : (
+        <Suspense fallback={<Loader />}>
+          <AdvocateTable advocates={filteredAdvocates} />
+        </Suspense>
+      )}
     </main>
   );
 }
