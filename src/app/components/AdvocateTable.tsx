@@ -9,7 +9,10 @@ const AdvocateTable: React.FC<AdvocateTableProps> = React.memo(
   ({ advocates }) => {
     return (
       <div className="overflow-x-auto">
-        <table className="min-w-full bg-white shadow-md rounded-lg overflow-hidden">
+        <table
+          className="min-w-full bg-white shadow-md rounded-lg overflow-hidden"
+          aria-label="Advocates Table"
+        >
           <thead className="bg-blue-500 text-white">
             <tr>
               <th className="py-3 px-4">First Name</th>

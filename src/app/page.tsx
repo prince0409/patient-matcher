@@ -6,7 +6,6 @@ import Loader from "./components/Loader";
 
 const AdvocateTable = lazy(() => import("./components/AdvocateTable"));
 const SearchBar = lazy(() => import("./components/SearchBar"));
-
 export default function Home() {
   const [advocates, setAdvocates] = useState<Advocate[]>([]);
   const [filteredAdvocates, setFilteredAdvocates] = useState<Advocate[]>([]);
@@ -14,7 +13,7 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
+  const fetchAdvocates = useCallback(() => {
     setLoading(true);
     setError(null);
     fetch(`/api/advocates`)
@@ -29,6 +28,10 @@ export default function Home() {
         setLoading(false);
       });
   }, []);
+
+  useEffect(() => {
+    fetchAdvocates();
+  }, [fetchAdvocates]);
 
   const debouncedFilter = useCallback(
     debounce((searchTerm: string) => {
@@ -76,7 +79,9 @@ export default function Home() {
       {loading ? (
         <Loader />
       ) : error ? (
-        <p className="text-center text-red-600">{error}</p>
+        <p className="text-center text-red-600" role="alert">
+          {error}
+        </p>
       ) : filteredAdvocates.length === 0 ? (
         <p className="text-center text-gray-600">No data available</p>
       ) : (

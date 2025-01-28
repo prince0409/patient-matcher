@@ -10,7 +10,9 @@ const SearchBar: React.FC<SearchBarProps> = React.memo(
   ({ onChange, onClick, searchTerm }) => {
     return (
       <div className="mb-6">
-        <p className="text-lg mb-2">Search</p>
+        <label htmlFor="search-input" className="text-lg mb-2 block">
+          Search
+        </label>
         <p className="text-sm text-gray-600 mb-4">
           Searching for:{" "}
           <span id="search-term" className="font-semibold">
@@ -18,6 +20,7 @@ const SearchBar: React.FC<SearchBarProps> = React.memo(
           </span>
         </p>
         <input
+          id="search-input"
           className="border border-gray-300 p-2 rounded w-full mb-4"
           onChange={onChange}
           value={searchTerm}
